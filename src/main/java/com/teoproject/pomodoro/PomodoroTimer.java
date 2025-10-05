@@ -1,6 +1,7 @@
 package com.teoproject.pomodoro;
 
 import java.time.Duration;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Controls the execution of a Pomodoro session by managing alternating work and break periods.
@@ -20,6 +21,8 @@ public class PomodoroTimer implements Runnable {
     private final int breakDurationMinutes;
     private final int intervalsPerSession;
 
+    private final CopyOnWriteArrayList<PomodoroTimerListener> listeners = new CopyOnWriteArrayList<>();
+
     private volatile boolean running;
     private volatile boolean paused;
     private volatile boolean stopRequested;
@@ -34,6 +37,16 @@ public class PomodoroTimer implements Runnable {
         this.workDurationMinutes = workDurationMinutes;
         this.breakDurationMinutes = breakDurationMinutes;
         this.intervalsPerSession = intervalsPerSession;
+    }
+
+    public void addListener(PomodoroTimerListener listener) {
+        if (listener != null) {
+            listeners.addIfAbsent(listener);
+        }
+    }
+
+    public void removeListener(PomodoroTimerListener listener) {
+        listeners.remove(listener);
     }
 
     @Override
@@ -78,6 +91,8 @@ public class PomodoroTimer implements Runnable {
             remainingSeconds = totalSeconds;
         }
 
+        notifyStatusChanged();
+
         while (remainingSeconds > 0) {
             synchronized (lock) {
                 if (stopRequested) {
@@ -109,10 +124,13 @@ public class PomodoroTimer implements Runnable {
                     totalFocusSeconds++;
                 }
             }
+
+            notifyStatusChanged();
         }
 
         if (phase == Phase.WORK) {
             completedIntervals++;
+            notifyStatusChanged();
         }
 
         return true;
@@ -127,30 +145,49 @@ public class PomodoroTimer implements Runnable {
             remainingSeconds = 0;
             lock.notifyAll();
         }
+
+        notifyStatusChanged();
+        notifySessionFinished(completed);
     }
 
     public void pause() {
+        boolean changed = false;
         synchronized (lock) {
             if (running && !paused) {
                 paused = true;
+                changed = true;
             }
+        }
+        if (changed) {
+            notifyStatusChanged();
         }
     }
 
     public void resume() {
+        boolean changed = false;
         synchronized (lock) {
             if (running && paused) {
                 paused = false;
                 lock.notifyAll();
+                changed = true;
             }
+        }
+        if (changed) {
+            notifyStatusChanged();
         }
     }
 
     public void requestStop() {
+        boolean changed;
         synchronized (lock) {
             stopRequested = true;
             paused = false;
             lock.notifyAll();
+            changed = running;
+        }
+
+        if (changed) {
+            notifyStatusChanged();
         }
     }
 
@@ -175,6 +212,19 @@ public class PomodoroTimer implements Runnable {
 
     public int getCompletedIntervals() {
         return completedIntervals;
+    }
+
+    private void notifyStatusChanged() {
+        TimerStatus status = getStatus();
+        for (PomodoroTimerListener listener : listeners) {
+            listener.onStatusUpdate(status);
+        }
+    }
+
+    private void notifySessionFinished(boolean completedSession) {
+        for (PomodoroTimerListener listener : listeners) {
+            listener.onSessionFinished(completedSession);
+        }
     }
 
     public long getTotalFocusSeconds() {
