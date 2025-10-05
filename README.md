@@ -41,6 +41,20 @@ All functionality works entirely offline so there are no distractions from inter
 Session logs are saved to `session_log.csv` in the project directory. You can back up or analyse this
 file to review long-term trends.
 
+## Running the project in NetBeans IDE
+
+You can also work with the application inside NetBeans if you prefer an IDE workflow:
+
+1. **Start NetBeans** and choose **File → New Project…**
+2. Select **Java with Ant → Java Project with Existing Sources** (or the equivalent "with Existing Sources" option for your NetBeans version) and click **Next**.
+3. Enter a project name such as `PomodoroTimer` and choose a location for the NetBeans project metadata.
+4. In the **Source Package Folders** step, click **Add Folder…** and select the repository’s `src/main/java` directory. Click **Next**.
+5. When prompted for the main class, set it to `com.teoproject.pomodoro.PomodoroApp`. Finish the wizard.
+6. NetBeans will index the sources. Once complete, you can **Right-click the project → Run** (or press `Shift + F6`) to launch the console application. NetBeans automatically compiles the sources before running.
+7. Session logs are still written to `session_log.csv` in the NetBeans project directory. You can open the file within NetBeans to review past sessions.
+
+These steps do not require any internet connectivity—the IDE runs the same offline Java application described above.
+
 ## Project Structure
 
 ```
