@@ -14,7 +14,8 @@ import java.util.List;
  * Handles persistence of session data to a CSV log file and provides utilities for reading the file.
  */
 public class SessionLogger {
-    private static final String DEFAULT_LOG_PATH = "session_log.csv";
+    private static final Path DEFAULT_LOG_PATH =
+            Paths.get(System.getProperty("user.home"), ".pomodoro-tracker", "session_log.csv");
 
     private final Path logPath;
 
@@ -23,13 +24,21 @@ public class SessionLogger {
     }
 
     public SessionLogger(String path) {
-        this.logPath = Paths.get(path);
+        this(Paths.get(path));
+    }
+
+    public SessionLogger(Path path) {
+        this.logPath = path;
     }
 
     public synchronized void appendEntry(String goalDescription, long focusMinutes, int intervalsCompleted) throws IOException {
         ensureFileExists();
         SessionLogEntry entry = new SessionLogEntry(LocalDateTime.now(), goalDescription, focusMinutes, intervalsCompleted);
-        try (BufferedWriter writer = Files.newBufferedWriter(logPath, StandardCharsets.UTF_8, java.nio.file.StandardOpenOption.APPEND)) {
+        try (BufferedWriter writer = Files.newBufferedWriter(
+                logPath,
+                StandardCharsets.UTF_8,
+                java.nio.file.StandardOpenOption.APPEND,
+                java.nio.file.StandardOpenOption.CREATE)) {
             writer.write(entry.toCsvRow());
             writer.newLine();
         }
@@ -51,6 +60,10 @@ public class SessionLogger {
     }
 
     private void ensureFileExists() throws IOException {
+        Path parent = logPath.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
         if (!Files.exists(logPath)) {
             Files.createFile(logPath);
         }
