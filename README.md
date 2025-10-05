@@ -1,10 +1,12 @@
 # Pomodoro Timer with Goal and Statistics Tracking
 
+
 A cross-platform Java desktop application built to help students such as Gleb stay focused during
 study sessions. The tool implements the Pomodoro technique, stores progress across sessions, and
 shows weekly productivity statistics without requiring an internet connection. A distraction-free
 Swing interface keeps every control—goal setting, timer management, configuration, and statistics—
 within a single window.
+
 
 ## Features
 
